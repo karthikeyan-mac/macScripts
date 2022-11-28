@@ -8,17 +8,31 @@
 jamfUser="karthik_api"
 jamfPass="yourPassword"
 jamfUrl="https://karthikdev.jamfcloud.com" ### JSS URL https://yourcompanyname.domainname.com (without / in the end)
-userNametobeRemoved="karthikeyan.m"   #username to remove
 userStaticGroupID=1  # User Static Group ID
+serialNumber=$(system_profiler SPHardwareDataType | awk '/Serial/ {print $4}') 
 
 fetchJamfAPIToken() {
 	
 		authTokenJson=$(/usr/bin/curl -s -X POST -u "${jamfUser}:${jamfPass}" "${jamfUrl}/api/v1/auth/token")
 		api_token=$(/usr/bin/plutil -extract "token" raw -expect "string" -o - - <<< "${authTokenJson}")
 		#echo $api_token
+		#return $api_token
 }
 fetchJamfAPIToken
 
+
+fetchUserName() {
+		response=$(curl -s --location --request GET "https://socuredev.jamfcloud.com/JSSResource/computers/serialnumber/${serialNumber}" \
+		--header 'Accept: application/xml, application/json' \
+		--header 'Content-Type: application/xml' \
+		--header "Authorization: Bearer ${api_token}")
+		#echo $response
+	
+		userNametobeRemoved=$(echo $response | xmllint --xpath '/computer/location/username/text()' -) 
+		echo "$userNametobeRemoved"
+	
+}
+fetchUserName
 
 response=$(curl -s --location --request PUT "${jamfUrl}/JSSResource/usergroups/id/${userStaticGroupID}" \
 --header "Accept: application/xml" \
@@ -36,7 +50,6 @@ content=$(sed '$ d' <<< "$response")   # get all but the last
 
 #echo $http_code
 #echo "$content"
-
 if [[ $http_code == 201 ]]; then
 	echo "Success with Status Code: ${http_code}"
 	echo "Removed \"$userNametobeRemoved\" from the Static User Group"
