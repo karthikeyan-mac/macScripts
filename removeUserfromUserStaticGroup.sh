@@ -22,7 +22,7 @@ fetchJamfAPIToken
 
 
 fetchUserName() {
-		response=$(curl -s --location --request GET "https://socuredev.jamfcloud.com/JSSResource/computers/serialnumber/${serialNumber}" \
+		response=$(curl -s --location --request GET "${jamfUrl}/JSSResource/computers/serialnumber/${serialNumber}" \
 		--header 'Accept: application/xml, application/json' \
 		--header 'Content-Type: application/xml' \
 		--header "Authorization: Bearer ${api_token}")
