@@ -13,10 +13,13 @@ serialNumber=$(system_profiler SPHardwareDataType | awk '/Serial/ {print $4}')
 
 fetchJamfAPIToken() {
 	
-		authTokenJson=$(/usr/bin/curl -s -X POST -u "${jamfUser}:${jamfPass}" "${jamfUrl}/api/v1/auth/token")
-		api_token=$(/usr/bin/plutil -extract "token" raw -expect "string" -o - - <<< "${authTokenJson}")
-		#echo $api_token
-		#return $api_token
+		if [[ $(/usr/bin/sw_vers -productVersion | awk -F . '{print $1}') -lt 12 ]]; then
+			api_token=$(/usr/bin/curl -X POST --silent -u "${jamfUser}:${jamfPass}" "${jamfUrl}/api/v1/auth/token" | python -c 'import sys, json; print json.load(sys.stdin)["token"]')
+		else
+			authTokenJson=$(/usr/bin/curl -s -X POST -u "${jamfUser}:${jamfPass}" "${jamfUrl}/api/v1/auth/token")
+			api_token=$(/usr/bin/plutil -extract "token" raw -expect "string" -o - - <<< "${authTokenJson}")
+		fi
+		
 }
 fetchJamfAPIToken
 
